@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -23,8 +24,15 @@ export const requireTenant = cache(async () => {
 
 export const canManage = (role: string) => role === "owner" || role === "admin";
 
-export function publicUrl(slug: string) {
-  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN!;
-  const proto = process.env.NODE_ENV === "production" ? "https" : "http";
-  return `${proto}://${slug}.${root}`;
+// Subdomain link when the current host sits under the root domain, otherwise a /b/<slug> path on this host.
+export async function publicUrl(slug: string) {
+  const h = await headers();
+  const host = h.get("host") ?? "";
+  const hostname = host.split(":")[0];
+  const rootFull = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
+  const root = rootFull.split(":")[0];
+  const proto = h.get("x-forwarded-proto") ?? (hostname === "localhost" || hostname.endsWith(".localhost") ? "http" : "https");
+
+  if (root && (hostname === root || hostname.endsWith(`.${root}`))) return `${proto}://${slug}.${rootFull}`;
+  return `${proto}://${host}/b/${slug}`;
 }

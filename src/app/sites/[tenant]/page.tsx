@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { services, staff, staffServices } from "@/db/schema";
 import { getTenantBySlug } from "@/lib/tenant";
 import { getSlots } from "@/lib/slots";
+import { basePath } from "@/lib/base";
 import { depositFor } from "@/lib/bookings";
 import { hueOf } from "@/lib/hue";
 import { formatMoney } from "@/lib/money";
@@ -58,6 +59,7 @@ export default async function TenantHome({
 }) {
   const { tenant: slug } = await params;
   const sp = await searchParams;
+  const base = await basePath();
   const tenant = await getTenantBySlug(slug);
   if (!tenant) notFound();
 
@@ -100,7 +102,7 @@ export default async function TenantHome({
   const slotHref = (start: string) => {
     const q = new URLSearchParams({ service: service!.id, start });
     if (chosenStaff) q.set("staff", chosenStaff.id);
-    return `/book?${q.toString()}`;
+    return `${base}/book?${q.toString()}`;
   };
 
   const groups = [

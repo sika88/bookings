@@ -11,6 +11,7 @@ import { getTenantBySlug } from "@/lib/tenant";
 import { getSlots } from "@/lib/slots";
 import { depositFor, expireHolds, HOLD_MINUTES, normalizeGhPhone, pgCode } from "@/lib/bookings";
 import { isUuid } from "@/lib/ids";
+import { basePath } from "@/lib/base";
 import type { BookingState } from "./types";
 
 const schema = z.object({
@@ -115,7 +116,7 @@ export async function createBooking(_prev: BookingState, formData: FormData): Pr
   }
   if (!token) return fail(TAKEN);
 
-  redirect(`/booking/${token}`);
+  redirect(`${await basePath()}/booking/${token}`);
 }
 
 const TOKEN = /^[a-f0-9]{32}$/;
@@ -138,5 +139,5 @@ export async function cancelBooking(formData: FormData): Promise<void> {
       ),
     );
 
-  redirect(`/booking/${token}`);
+  redirect(`${await basePath()}/booking/${token}`);
 }

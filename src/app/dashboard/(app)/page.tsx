@@ -36,7 +36,7 @@ export default async function Overview() {
       .limit(5),
   ]);
 
-  const url = publicUrl(tenant.slug);
+  const url = await publicUrl(tenant.slug);
   const steps = [
     { done: svc.n > 0, label: "Add at least one service", href: "/services" },
     { done: stf.n > 0, label: "Add a staff member and set their working hours", href: "/staff" },

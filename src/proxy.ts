@@ -14,17 +14,30 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL(`${pathname}${search}`, `${protocol}//app.${ROOT_FULL}`));
   }
 
-  // a business's public booking page
+  // never let a client set our internal header
+  const fwd = new Headers(req.headers);
+  fwd.delete("x-base");
+
+  // a business's public booking page on its own subdomain
   if (sub && sub !== "app") {
     const url = req.nextUrl.clone();
     url.pathname = `/sites/${sub}${pathname}`;
-    return NextResponse.rewrite(url);
+    return NextResponse.rewrite(url, { request: { headers: fwd } });
   }
 
-  // app.<root>, or any other host such as *.vercel.app: the dashboard
+  // path-based booking pages for hosts without tenant subdomains (e.g. *.vercel.app)
+  const m = /^\/b\/([a-z0-9-]+)(\/.*)?$/.exec(pathname);
+  if (m) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/sites/${m[1]}${m[2] ?? ""}`;
+    fwd.set("x-base", `/b/${m[1]}`);
+    return NextResponse.rewrite(url, { request: { headers: fwd } });
+  }
+
+  // app.<root>, or any other host: the dashboard
   const url = req.nextUrl.clone();
   url.pathname = `/dashboard${pathname}`;
-  return NextResponse.rewrite(url);
+  return NextResponse.rewrite(url, { request: { headers: fwd } });
 }
 
 export const config = {

@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { services, staff } from "@/db/schema";
 import { getTenantBySlug } from "@/lib/tenant";
 import { getSlots } from "@/lib/slots";
+import { basePath } from "@/lib/base";
 import { depositFor } from "@/lib/bookings";
 import { formatWhen } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -28,6 +29,7 @@ export default async function BookPage({
 }) {
   const { tenant: slug } = await params;
   const sp = await searchParams;
+  const base = await basePath();
   const tenant = await getTenantBySlug(slug);
   if (!tenant) notFound();
 
@@ -58,7 +60,7 @@ export default async function BookPage({
 
   const backQuery = new URLSearchParams({ service: service.id, date });
   if (staffId) backQuery.set("staff", staffId);
-  const back = `/?${backQuery.toString()}`;
+  const back = `${base}/?${backQuery.toString()}`;
 
   const deposit = depositFor(service);
 

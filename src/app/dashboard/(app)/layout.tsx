@@ -8,6 +8,7 @@ import Nav from "./nav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { session, tenant } = await requireTenant();
+  const url = await publicUrl(tenant.slug);
 
   return (
     <div className="dash" style={{ "--h": hueOf(tenant.slug) } as CSSProperties}>
@@ -19,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
         <Nav />
         <div className="side-foot">
-          <a href={publicUrl(tenant.slug)} target="_blank" rel="noreferrer" className="act primary">
+          <a href={url} target="_blank" rel="noreferrer" className="act primary">
             View booking page <External />
           </a>
           <div className="muted small side-email">{session.user.email}</div>

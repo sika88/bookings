@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { createTenant, type FormState } from "./actions";
 
-export default function OnboardingForm({ rootDomain }: { rootDomain: string }) {
+export default function OnboardingForm({ prefix, suffix }: { prefix: string; suffix: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createTenant, undefined);
 
   return (
@@ -15,8 +15,9 @@ export default function OnboardingForm({ rootDomain }: { rootDomain: string }) {
       <label>
         Your booking page address
         <div className="field-group">
+          {prefix && <span className="suffix" style={{ paddingLeft: "0.95rem" }}>{prefix}</span>}
           <input name="slug" required placeholder="glow-salon" autoCapitalize="none" />
-          <span className="suffix">.{rootDomain}</span>
+          {suffix && <span className="suffix">{suffix}</span>}
         </div>
       </label>
       <label>

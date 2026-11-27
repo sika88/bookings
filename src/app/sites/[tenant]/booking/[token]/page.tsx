@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings, customers, services, staff } from "@/db/schema";
 import { getTenantBySlug } from "@/lib/tenant";
+import { basePath } from "@/lib/base";
 import { HOLD_MINUTES } from "@/lib/bookings";
 import { formatTime, formatWhen } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -21,6 +22,7 @@ export default async function BookingPage({
   params: Promise<{ tenant: string; token: string }>;
 }) {
   const { tenant: slug, token } = await params;
+  const base = await basePath();
   const tenant = await getTenantBySlug(slug);
   if (!tenant || !TOKEN.test(token)) notFound();
 
@@ -120,7 +122,7 @@ export default async function BookingPage({
         )}
 
         {(holdExpired || b.status === "cancelled") && (
-          <Link href="/" className="btn">Book another time</Link>
+          <Link href={base || "/"} className="btn">Book another time</Link>
         )}
       </div>
     </main>
