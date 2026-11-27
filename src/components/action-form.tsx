@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Check } from "./icons";
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
 
@@ -8,7 +9,7 @@ export default function ActionForm({
   action,
   submitLabel,
   children,
-  className = "space-y-3",
+  className = "form flush",
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   submitLabel: string;
@@ -20,11 +21,17 @@ export default function ActionForm({
   return (
     <form action={formAction} className={className}>
       {children}
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state?.ok && <p className="text-sm text-green-700">Saved.</p>}
-      <button disabled={pending} className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-50">
-        {pending ? "Saving..." : submitLabel}
-      </button>
+      {state?.error && <p className="alert" role="alert">{state.error}</p>}
+      <div className="form-foot">
+        <button disabled={pending} className="btn btn-inline">
+          {pending ? "Saving..." : submitLabel}
+        </button>
+        {state?.ok && (
+          <span className="saved" role="status">
+            <Check /> Saved
+          </span>
+        )}
+      </div>
     </form>
   );
 }

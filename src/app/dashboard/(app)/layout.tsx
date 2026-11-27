@@ -1,28 +1,32 @@
-import Link from "next/link";
+import type { CSSProperties } from "react";
+import Aurora from "@/components/aurora";
+import { External } from "@/components/icons";
 import { publicUrl, requireTenant } from "@/lib/context";
+import { hueOf } from "@/lib/hue";
 import SignOutButton from "../sign-out-button";
+import Nav from "./nav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { session, tenant } = await requireTenant();
 
   return (
-    <div className="mx-auto max-w-3xl p-4 sm:p-8">
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
-        <div>
-          <div className="font-semibold">{tenant.name}</div>
-          <div className="text-xs text-neutral-500">{session.user.email}</div>
+    <div className="dash" style={{ "--h": hueOf(tenant.slug) } as CSSProperties}>
+      <Aurora />
+      <aside className="glass sidebar enter">
+        <div className="side-brand">
+          <div className="monogram">{tenant.name.charAt(0).toUpperCase()}</div>
+          <div className="side-name">{tenant.name}</div>
         </div>
-        <nav className="flex flex-wrap items-center gap-4 text-sm">
-          <Link href="/">Overview</Link>
-          <Link href="/services">Services</Link>
-          <Link href="/staff">Staff</Link>
-          <a href={publicUrl(tenant.slug)} target="_blank" rel="noreferrer" className="underline">
-            View booking page
+        <Nav />
+        <div className="side-foot">
+          <a href={publicUrl(tenant.slug)} target="_blank" rel="noreferrer" className="act primary">
+            View booking page <External />
           </a>
+          <div className="muted small side-email">{session.user.email}</div>
           <SignOutButton />
-        </nav>
-      </header>
-      {children}
+        </div>
+      </aside>
+      <div className="main">{children}</div>
     </div>
   );
 }

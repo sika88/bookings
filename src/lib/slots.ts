@@ -1,3 +1,4 @@
+import { expireHolds } from "@/lib/bookings";
 import { and, eq, gt, inArray, lt } from "drizzle-orm";
 import { TZDate } from "@date-fns/tz";
 import { addDays } from "date-fns";
@@ -16,6 +17,7 @@ export async function getSlots(opts: {
   date: string; // YYYY-MM-DD in the tenant's timezone
 }): Promise<Slot[]> {
   const { tenant, serviceId, staffId, date } = opts;
+  await expireHolds(tenant.id);
   const tz = tenant.timezone;
 
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);

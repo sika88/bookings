@@ -7,7 +7,7 @@ export default function SignOutButton() {
   const router = useRouter();
   return (
     <button
-      className="rounded border px-3 py-1 text-sm"
+      className="act"
       onClick={async () => {
         await authClient.signOut();
         router.push("/login");

@@ -7,10 +7,10 @@ export default async function Onboarding() {
   if (!session) redirect("/login");
 
   return (
-    <main className="mx-auto max-w-md p-8">
-      <h1 className="mb-1 text-2xl font-semibold">Set up your business</h1>
-      <p className="mb-6 text-sm text-neutral-500">This creates your public booking page.</p>
+    <div className="glass auth enter">
+      <h1 className="display h-md">Set up your business</h1>
+      <p className="muted">This creates your public booking page. You can add services and staff next.</p>
       <OnboardingForm rootDomain={process.env.NEXT_PUBLIC_ROOT_DOMAIN!} />
-    </main>
+    </div>
   );
 }

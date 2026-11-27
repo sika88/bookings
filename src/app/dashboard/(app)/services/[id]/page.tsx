@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { services } from "@/db/schema";
-import { requireTenant } from "@/lib/context";
-import { isUuid } from "@/lib/ids";
 import ActionForm from "@/components/action-form";
+import { Chevron } from "@/components/icons";
+import { requireTenant } from "@/lib/context";
+import { num } from "@/lib/css";
+import { isUuid } from "@/lib/ids";
 import { updateService } from "../actions";
 import ServiceFields from "../fields";
 
@@ -22,12 +24,16 @@ export default async function EditService({ params }: { params: Promise<{ id: st
   if (!service) notFound();
 
   return (
-    <div className="space-y-6">
-      <Link href="/services" className="text-sm underline">← Back to services</Link>
-      <h1 className="text-2xl font-semibold">Edit service</h1>
-      <ActionForm action={updateService} submitLabel="Save changes">
-        <ServiceFields service={service} />
-      </ActionForm>
-    </div>
+    <>
+      <Link href="/services" className="back enter" style={num(0)}>
+        <Chevron /> Back to services
+      </Link>
+      <section className="glass panel enter" style={{ ...num(1), maxWidth: "36rem" }}>
+        <h1 className="display h-md">Edit {service.name}</h1>
+        <ActionForm action={updateService} submitLabel="Save changes">
+          <ServiceFields service={service} />
+        </ActionForm>
+      </section>
+    </>
   );
 }
