@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Grid, List, Users } from "@/components/icons";
+import { Calendar, Gear, Grid, List, Users } from "@/components/icons";
 
 const items = [
   { href: "/", label: "Overview", Icon: Grid },
   { href: "/bookings", label: "Bookings", Icon: Calendar },
   { href: "/services", label: "Services", Icon: List },
   { href: "/staff", label: "Staff", Icon: Users },
+  { href: "/settings", label: "Settings", Icon: Gear },
 ];
 
 export default function Nav() {

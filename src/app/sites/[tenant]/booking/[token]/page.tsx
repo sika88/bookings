@@ -1,16 +1,20 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { bookings, customers, services, staff } from "@/db/schema";
+import { bookings, customers, payments, services, staff } from "@/db/schema";
 import { getTenantBySlug } from "@/lib/tenant";
 import { basePath } from "@/lib/base";
 import { HOLD_MINUTES } from "@/lib/bookings";
 import { formatTime, formatWhen } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
+import { toLocalPhone } from "@/lib/networks";
+import { paystackConfigured } from "@/lib/paystack";
 import { cancelBooking } from "../../actions";
 import { Check, Clock, Cross } from "../../icons";
+import PayPanel from "../../pay/pay-panel";
+import type { PayState } from "../../pay/types";
 import Countdown from "./countdown";
 
 const TOKEN = /^[a-f0-9]{32}$/;
@@ -32,6 +36,7 @@ export default async function BookingPage({
       serviceName: services.name,
       staffName: staff.displayName,
       customerName: customers.name,
+      phone: customers.phone,
     })
     .from(bookings)
     .innerJoin(services, eq(bookings.serviceId, services.id))
@@ -47,6 +52,19 @@ export default async function BookingPage({
   const holdExpired = b.status === "pending" && !holdActive;
   const canCancel = (b.status === "confirmed" || holdActive) && b.startsAt.getTime() > now;
 
+  const pays = await db.select().from(payments).where(eq(payments.bookingId, b.id)).orderBy(desc(payments.createdAt));
+  const refundDue = pays.some((p) => p.status === "refund_due");
+  const last = pays[0];
+
+  let initial: PayState = { step: "form" };
+  if (last?.status === "pending" && now - last.createdAt.getTime() < 195_000) {
+    initial = {
+      step: last.providerStatus === "send_otp" ? "otp" : "waiting",
+      reference: last.reference,
+      message: last.message ?? "Approve the payment prompt on your phone.",
+    };
+  }
+
   let title = "";
   let message = "";
   let hue = 0;
@@ -54,7 +72,7 @@ export default async function BookingPage({
 
   if (b.status === "confirmed") {
     title = "You are booked";
-    message = "Keep this page. You can check or cancel your booking from it.";
+    message = b.depositPesewas > 0 ? "Your deposit was received. Keep this page to check or cancel your booking." : "Keep this page. You can check or cancel your booking from it.";
     hue = 150;
     icon = "check";
   } else if (holdActive) {
@@ -96,7 +114,34 @@ export default async function BookingPage({
         )}
       </section>
 
-      <section className="glass panel enter" style={num(1)}>
+      {refundDue && (
+        <section className="glass panel enter" style={num(1)}>
+          <p className="alert" role="status">
+            We received a payment for this booking, but the time could not be confirmed. {tenant.name} will refund it to your mobile money wallet.
+          </p>
+        </section>
+      )}
+
+      {holdActive && (
+        <section className="glass panel enter" style={num(1)}>
+          <h2 className="display" style={{ fontSize: "1.3rem", marginBottom: "1rem" }}>
+            Pay your {formatMoney(b.depositPesewas)} deposit
+          </h2>
+          {paystackConfigured() ? (
+            <PayPanel
+              slug={slug}
+              token={token}
+              amountLabel={formatMoney(b.depositPesewas)}
+              defaultPhone={toLocalPhone(row.phone)}
+              initial={initial}
+            />
+          ) : (
+            <p className="muted">Online payment is not switched on for this business yet. Please contact them to pay your deposit.</p>
+          )}
+        </section>
+      )}
+
+      <section className="glass panel enter" style={num(2)}>
         <p className="muted small" style={{ marginBottom: "0.9rem" }}>{tenant.name}</p>
         <dl className="summary" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 0 }}>
           <div><dt>Service</dt><dd>{row.serviceName}</dd></div>
@@ -108,11 +153,7 @@ export default async function BookingPage({
         </dl>
       </section>
 
-      <div className="enter" style={{ ...num(2), display: "grid", gap: "0.75rem" }}>
-        {holdActive && (
-          <button disabled className="btn">Pay with Mobile Money (coming in the next step)</button>
-        )}
-
+      <div className="enter" style={{ ...num(3), display: "grid", gap: "0.75rem" }}>
         {canCancel && (
           <form action={cancelBooking}>
             <input type="hidden" name="slug" value={slug} />

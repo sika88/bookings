@@ -14,12 +14,15 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL(`${pathname}${search}`, `${protocol}//app.${ROOT_FULL}`));
   }
 
-  // never let a client set our internal header
+  // never let a client set our internal headers
   const fwd = new Headers(req.headers);
   fwd.delete("x-base");
+  fwd.delete("x-orig");
+  const orig = `${pathname}${search}`;
 
   // a business's public booking page on its own subdomain
   if (sub && sub !== "app") {
+    fwd.set("x-orig", orig);
     const url = req.nextUrl.clone();
     url.pathname = `/sites/${sub}${pathname}`;
     return NextResponse.rewrite(url, { request: { headers: fwd } });
@@ -28,9 +31,10 @@ export function proxy(req: NextRequest) {
   // path-based booking pages for hosts without tenant subdomains (e.g. *.vercel.app)
   const m = /^\/b\/([a-z0-9-]+)(\/.*)?$/.exec(pathname);
   if (m) {
+    fwd.set("x-orig", orig);
+    fwd.set("x-base", `/b/${m[1]}`);
     const url = req.nextUrl.clone();
     url.pathname = `/sites/${m[1]}${m[2] ?? ""}`;
-    fwd.set("x-base", `/b/${m[1]}`);
     return NextResponse.rewrite(url, { request: { headers: fwd } });
   }
 
