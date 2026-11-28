@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const tenantType = pgEnum("tenant_type", ["salon", "clinic", "barber", "venue"]);
 
@@ -10,5 +10,6 @@ export const tenants = pgTable("tenants", {
   timezone: text("timezone").notNull().default("Africa/Accra"),
   currency: text("currency").notNull().default("GHS"),
   status: text("status").notNull().default("active"),
+  smsEnabled: boolean("sms_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

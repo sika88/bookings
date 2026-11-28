@@ -11,6 +11,7 @@ import { getTenantBySlug } from "@/lib/tenant";
 import { getSlots } from "@/lib/slots";
 import { depositFor, expireHolds, HOLD_MINUTES, normalizeGhPhone, pgCode } from "@/lib/bookings";
 import { isUuid } from "@/lib/ids";
+import { onBookingCancelled, onBookingConfirmed } from "@/lib/messaging";
 import { basePath } from "@/lib/base";
 import type { BookingState } from "./types";
 
@@ -106,8 +107,9 @@ export async function createBooking(_prev: BookingState, formData: FormData): Pr
           depositPesewas: deposit,
           notes: v.notes ? v.notes : null,
         })
-        .returning({ token: bookings.manageToken });
+        .returning({ token: bookings.manageToken, id: bookings.id, status: bookings.status });
       token = b.token;
+      if (b.status === "confirmed") await onBookingConfirmed(b.id);
       break;
     } catch (e) {
       // 23P01 = the database refused an overlapping booking; try the next free person
@@ -127,7 +129,7 @@ export async function cancelBooking(formData: FormData): Promise<void> {
   const tenant = await getTenantBySlug(slug);
   if (!tenant || !TOKEN.test(token)) return;
 
-  await db
+  const cancelled = await db
     .update(bookings)
     .set({ status: "cancelled" })
     .where(
@@ -137,7 +139,10 @@ export async function cancelBooking(formData: FormData): Promise<void> {
         inArray(bookings.status, ["pending", "confirmed"]),
         gt(bookings.startsAt, new Date()),
       ),
-    );
+    )
+    .returning({ id: bookings.id });
+
+  for (const c of cancelled) await onBookingCancelled(c.id);
 
   redirect(`${await basePath()}/booking/${token}`);
 }

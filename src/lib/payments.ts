@@ -1,6 +1,7 @@
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { bookings, payments } from "@/db/schema";
+import { onBookingConfirmed } from "./messaging";
 import { verifyTransaction } from "./paystack";
 
 export type PayOutcome = "pending" | "success" | "failed" | "refund_due" | "mismatch" | "unknown";
@@ -62,7 +63,10 @@ export async function applyPaystackResult(d: {
       .set({ status: "confirmed", holdExpiresAt: null })
       .where(and(eq(bookings.id, p.bookingId), eq(bookings.status, "pending")))
       .returning({ id: bookings.id });
-    if (confirmed.length > 0) return "success";
+    if (confirmed.length > 0) {
+      await onBookingConfirmed(p.bookingId);
+      return "success";
+    }
 
     const [b] = await db.select({ status: bookings.status }).from(bookings).where(eq(bookings.id, p.bookingId)).limit(1);
     if (b?.status === "confirmed") {

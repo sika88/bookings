@@ -36,6 +36,13 @@
       "when": 1795815137346,
       "tag": "0004_huge_cloak",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795817878132,
+      "tag": "0005_illegal_warbound",
+      "breakpoints": true
     }
   ]
 }

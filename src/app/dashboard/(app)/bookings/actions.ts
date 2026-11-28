@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { bookings } from "@/db/schema";
 import { canManage, requireTenant } from "@/lib/context";
 import { isUuid } from "@/lib/ids";
+import { onBookingCancelled } from "@/lib/messaging";
 
 export async function setBookingStatus(formData: FormData): Promise<void> {
   const { tenant, role } = await requireTenant();
@@ -16,10 +17,12 @@ export async function setBookingStatus(formData: FormData): Promise<void> {
   if (!isUuid(id)) return;
 
   if (status === "cancelled") {
-    await db
+    const done = await db
       .update(bookings)
       .set({ status: "cancelled" })
-      .where(and(eq(bookings.id, id), eq(bookings.tenantId, tenant.id), inArray(bookings.status, ["pending", "confirmed"])));
+      .where(and(eq(bookings.id, id), eq(bookings.tenantId, tenant.id), inArray(bookings.status, ["pending", "confirmed"])))
+      .returning({ id: bookings.id });
+    for (const d of done) await onBookingCancelled(d.id);
   } else if (status === "completed" || status === "no_show") {
     await db
       .update(bookings)

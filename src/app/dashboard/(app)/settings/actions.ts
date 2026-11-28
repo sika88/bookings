@@ -24,6 +24,15 @@ export async function updateBusiness(_prev: ActionState, formData: FormData): Pr
   return { ok: true };
 }
 
+export async function updateSms(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { tenant, role } = await requireTenant();
+  if (!canManage(role)) return { error: "You don't have permission to do this" };
+
+  await db.update(tenants).set({ smsEnabled: formData.get("smsEnabled") === "on" }).where(eq(tenants.id, tenant.id));
+  revalidatePath("/dashboard", "layout");
+  return { ok: true };
+}
+
 export async function updateAddress(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { tenant, role } = await requireTenant();
   if (role !== "owner") return { error: "Only the owner can change the booking address" };
